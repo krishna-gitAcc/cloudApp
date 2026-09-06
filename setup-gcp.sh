@@ -11,12 +11,12 @@
 set -euo pipefail
 
 # ── Configuration — edit these before running ─────────────────────────────────
-PROJECT_ID="YOUR_PROJECT_ID"
+PROJECT_ID="user-info-390317"
 REGION="us-central1"
 AR_REPO="sample-app"
 SA_NAME="github-actions-deployer"
-GITHUB_ORG="YOUR_GITHUB_USERNAME_OR_ORG"
-GITHUB_REPO="YOUR_GITHUB_REPO_NAME"
+GITHUB_ORG="krishna-gitAcc"
+GITHUB_REPO="cloudApp"
 POOL_NAME="github-pool"
 PROVIDER_NAME="github-provider"
 # ─────────────────────────────────────────────────────────────────────────────
