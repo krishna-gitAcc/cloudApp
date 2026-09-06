@@ -13,7 +13,7 @@ set -euo pipefail
 # ── Configuration — edit these before running ─────────────────────────────────
 PROJECT_ID="user-info-390317"
 REGION="us-central1"
-AR_REPO="cloudApp"
+AR_REPO="cloud_app"
 SA_NAME="github-actions-deployer"
 GITHUB_ORG="krishna-gitAcc"
 GITHUB_REPO="cloudApp"

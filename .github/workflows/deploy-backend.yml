@@ -7,13 +7,16 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/deploy-backend.yml'
-  workflow_dispatch: # allow manual trigger
+  workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: ${{ secrets.GCP_REGION }}           # e.g. us-central1
-  REPO_NAME: ${{ secrets.GCP_AR_REPO }}        # Artifact Registry repo name
+  # ── Non-sensitive config — hardcoded (not secrets) ───────────────────────
+  PROJECT_ID: user-info-390317
+  REGION: us-central1
+  AR_REPO: sample-app
   SERVICE_NAME: sample-app-backend
+  # Docker requires all image names to be strictly lowercase
+  IMAGE: us-central1-docker.pkg.dev/user-info-390317/sample-app/backend
 
 jobs:
   deploy:
@@ -35,34 +38,39 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      # ── 3. Configure Docker to push to Artifact Registry ─────────────────
+      # ── 3. Configure Docker for Artifact Registry ─────────────────────────
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      # ── 4. Build & push Docker image ─────────────────────────────────────
+      # ── 4. Enforce lowercase image name (Docker requirement) ─────────────
+      - name: Set lowercase image name
+        run: |
+          IMAGE_LOWER=$(echo "${{ env.IMAGE }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE=${IMAGE_LOWER}" >> $GITHUB_ENV
+
+      # ── 5. Build Docker image ────────────────────────────────────────────
       - name: Build Docker image
         working-directory: backend
         run: |
-          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/backend"
           docker build \
-            -t "${IMAGE}:${{ github.sha }}" \
-            -t "${IMAGE}:latest" \
+            -t "${{ env.IMAGE }}:${{ github.sha }}" \
+            -t "${{ env.IMAGE }}:latest" \
             .
 
+      # ── 6. Push Docker image ──────────────────────────────────────────────
       - name: Push Docker image
         run: |
-          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/backend"
-          docker push "${IMAGE}:${{ github.sha }}"
-          docker push "${IMAGE}:latest"
+          docker push "${{ env.IMAGE }}:${{ github.sha }}"
+          docker push "${{ env.IMAGE }}:latest"
 
-      # ── 5. Deploy to Cloud Run ────────────────────────────────────────────
+      # ── 7. Deploy to Cloud Run ────────────────────────────────────────────
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/backend:${{ github.sha }}
+          image: ${{ env.IMAGE }}:${{ github.sha }}
           flags: >-
             --allow-unauthenticated
             --port=3001
@@ -72,6 +80,6 @@ jobs:
             NODE_ENV=production
             FRONTEND_ORIGIN=${{ secrets.FRONTEND_URL }}
 
-      # ── 6. Print service URL ──────────────────────────────────────────────
+      # ── 8. Print deployed URL ─────────────────────────────────────────────
       - name: Show deployed URL
-        run: echo "Backend deployed at ${{ steps.deploy.outputs.url }}"
+        run: echo "✅ Backend deployed at ${{ steps.deploy.outputs.url }}"
