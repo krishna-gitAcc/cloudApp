@@ -5,7 +5,7 @@ import { useApi } from '../../../hooks/useApi'
 import type { ColumnsType } from 'antd/es/table'
 
 interface Item {
-  id: number
+  id: string
   name: string
   description: string
   createdAt: string
@@ -46,7 +46,7 @@ export default function ItemsPage() {
     } catch { /* form validation error handled by AntD */ }
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     await deleteItem({ method: 'DELETE', url: `/api/items/${id}` })
     setItems((prev) => prev.filter((i) => i.id !== id))
     messageApi.success('Item deleted')
@@ -56,10 +56,10 @@ export default function ItemsPage() {
     {
       title: 'ID',
       dataIndex: 'id',
-      width: 70,
-      render: (id: number) => (
-        <Tag style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: 'var(--color-brand-primary)', borderRadius: 6 }}>
-          #{id}
+      width: 100,
+      render: (id: string) => (
+        <Tag style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: 'var(--color-brand-primary)', borderRadius: 6, fontSize: 10 }}>
+          {id.slice(0, 8)}...
         </Tag>
       ),
     },
