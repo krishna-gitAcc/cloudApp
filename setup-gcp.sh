@@ -13,7 +13,7 @@ set -euo pipefail
 # ── Configuration — edit these before running ─────────────────────────────────
 PROJECT_ID="user-info-390317"
 REGION="us-central1"
-AR_REPO="sample-app"
+AR_REPO="cloudApp"
 SA_NAME="github-actions-deployer"
 GITHUB_ORG="krishna-gitAcc"
 GITHUB_REPO="cloudApp"
@@ -77,7 +77,8 @@ gcloud iam workload-identity-pools providers create-oidc "${PROVIDER_NAME}" \
   --location="global" \
   --workload-identity-pool="${POOL_NAME}" \
   --display-name="GitHub Provider" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
+  --attribute-condition="assertion.repository_owner == '${GITHUB_ORG}'" \
   --issuer-uri="https://token.actions.githubusercontent.com" \
   || echo "  (already exists, skipping)"
 
