@@ -1,0 +1,39 @@
+steps:
+  # Step 1: Build the Docker image (inject backend URL)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg=VITE_API_BASE_URL=$_BACKEND_URL'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/frontend:$COMMIT_SHA'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/frontend:latest'
+      - '.'
+
+  # Step 2: Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/frontend'
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'sample-app-frontend'
+      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/frontend:$COMMIT_SHA'
+      - '--region=$_REGION'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+
+substitutions:
+  _REGION: us-central1
+  _REPO_NAME: sample-app
+  _BACKEND_URL: https://sample-app-backend-<hash>-uc.a.run.app
+
+options:
+  logging: CLOUD_LOGGING_ONLY

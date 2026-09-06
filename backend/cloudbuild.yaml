@@ -1,0 +1,39 @@
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/backend:$COMMIT_SHA'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/backend:latest'
+      - '.'
+
+  # Step 2: Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/backend'
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'sample-app-backend'
+      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/backend:$COMMIT_SHA'
+      - '--region=$_REGION'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=3001'
+      - '--set-env-vars=NODE_ENV=production,FRONTEND_ORIGIN=$_FRONTEND_ORIGIN'
+
+substitutions:
+  _REGION: us-central1
+  _REPO_NAME: sample-app
+  _FRONTEND_ORIGIN: https://your-frontend-url.run.app
+
+options:
+  logging: CLOUD_LOGGING_ONLY

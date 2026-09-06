@@ -1,0 +1,11 @@
+# ── Backend-specific ignores ──────────────────────────────────────────────────
+# (root .gitignore covers node_modules, .env, logs, etc.)
+
+# Compiled TypeScript output
+dist/
+
+# ts-node-dev cache
+.ts-node/
+
+# Type declaration maps (generated, not needed in git)
+**/*.d.ts.map
